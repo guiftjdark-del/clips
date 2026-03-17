@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>clips</title>
 
-<!-- FONTE -->
+<!-- FONTE CERTA -->
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
 
 <style>
@@ -95,12 +95,18 @@ body{
     font-family:'Lilita One', cursive;
     font-size:28px;
 
-    background:black;
+    background:#0f0f0f;
     color:white;
-    border:none;
+
+    border:1.5px solid #00ff88;
+    border-radius:12px;
+
+    padding:5px 12px;
 
     cursor:pointer;
     z-index:1000;
+
+    display:none;
 }
 
 </style>
@@ -112,7 +118,7 @@ body{
 <div id="home" class="grid"></div>
 
 <!-- BOTÃO VOLTAR -->
-<button class="back-btn" onclick="goHome()">←</button>
+<button class="back-btn" id="backBtn" onclick="goHome()">←</button>
 
 <!-- PLAYER -->
 <div class="container" id="playerScreen">
@@ -133,22 +139,19 @@ body{
 
 <script>
 
-const firebaseConfig = 
-{ apiKey: "AIzaSyDsGHkgjKovIpVcCeZAQNet424lhvqQiUk", 
- authDomain: "clips-firebase-56329.firebaseapp.com", 
- databaseURL: "https://clips-firebase-56329-default-rtdb.firebaseio.com", 
- projectId: "clips-firebase-56329", 
- storageBucket: "clips-firebase-56329.firebasestorage.app", 
- messagingSenderId: "496262241949", 
- appId: "1:496262241949:web:5e6761d129cbf361373e74"
+const firebaseConfig = {
+  apiKey: "AIzaSyDsGHkgjKovIpVcCeZAQNet424lhvqQiUk",
+  authDomain: "clips-firebase-56329.firebaseapp.com",
+  databaseURL: "https://clips-firebase-56329-default-rtdb.firebaseio.com",
+  projectId: "clips-firebase-56329"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const videos = [
-  { file: "video1.mp4", title: "bomba de chão" },
-  { file: "video2.mp4", title: "borlas" },
+  { file: "video1.mp4", title: "bomba lixo" },
+  { file: "video2.mp4", title: "burlinhas" },
   { file: "video3.mp4", title: "raio" }
 ]
 
@@ -158,6 +161,7 @@ const mainVideo = document.getElementById("mainVideo")
 const title = document.getElementById("videoTitle")
 const stats = document.getElementById("videoStats")
 const list = document.getElementById("videoList")
+const backBtn = document.getElementById("backBtn")
 
 function safeKey(name){
     return name.replace(/\./g, "_")
@@ -198,6 +202,7 @@ function openPlayer(video){
 
     home.style.display = "none"
     playerScreen.style.display = "flex"
+    backBtn.style.display = "block"
 
     mainVideo.src = "videos/" + video.file
     title.innerText = video.title
@@ -252,6 +257,7 @@ function goHome(){
 
     playerScreen.style.display = "none"
     home.style.display = "grid"
+    backBtn.style.display = "none"
 }
 
 </script>
