@@ -13,11 +13,39 @@ body{
     font-family:Arial;
 }
 
-.container{
-    display:flex;
+/* HOME GRID */
+
+.grid{
+    display:grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap:15px;
+    padding:20px;
+}
+
+.grid-item{
+    cursor:pointer;
+}
+
+.grid-item video{
+    width:100%;
+    border-radius:10px;
+}
+
+.grid-title{
+    font-size:14px;
+    margin-top:5px;
+}
+
+.grid-views{
+    font-size:12px;
+    color:#aaa;
 }
 
 /* PLAYER */
+
+.container{
+    display:none;
+}
 
 .player{
     width:70%;
@@ -29,52 +57,6 @@ body{
     max-height:70vh;
     border-radius:10px;
 }
-
-/* INFO */
-
-.video-title{
-    font-size:22px;
-    margin-top:10px;
-}
-
-.video-stats{
-    font-size:14px;
-    color:#aaa;
-    margin-top:5px;
-}
-
-/* BOTÃO LIKE */
-
-.like-btn{
-    margin-top:10px;
-    background:white;
-    color:black;
-    border:none;
-    padding:8px 15px;
-    border-radius:20px;
-    cursor:pointer;
-    transition: background 0.5s, color 0.5s;
-}
-
-/* animação curtir */
-.like-btn.animating{
-    background:black;
-    color:black;
-}
-
-/* estado curtido */
-.like-btn.liked{
-    background:#3ea6ff;
-    color:black;
-}
-
-/* animação descurtir */
-.like-btn.unliking{
-    background:white;
-    color:white;
-}
-
-/* SIDEBAR */
 
 .sidebar{
     width:30%;
@@ -98,8 +80,10 @@ body{
     margin-left:10px;
 }
 
-.video-name{
-    font-size:15px;
+.back-btn{
+    margin:10px;
+    padding:8px 15px;
+    cursor:pointer;
 }
 
 </style>
@@ -107,16 +91,18 @@ body{
 
 <body>
 
-<div class="container">
+<!-- HOME -->
+<div id="home" class="grid"></div>
+
+<!-- PLAYER -->
+<button class="back-btn" onclick="goHome()">← Voltar</button>
+
+<div class="container" id="playerScreen">
 
 <div class="player">
-
 <video id="mainVideo" controls></video>
-
-<div class="video-title" id="videoTitle"></div>
-<div class="video-stats" id="videoStats"></div>
-<button class="like-btn" id="likeBtn">👍</button>
-
+<div id="videoTitle"></div>
+<div id="videoStats"></div>
 </div>
 
 <div class="sidebar" id="videoList"></div>
@@ -129,15 +115,11 @@ body{
 
 <script>
 
-// CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyDsGHkgjKovIpVcCeZAQNet424lhvqQiUk",
   authDomain: "clips-firebase-56329.firebaseapp.com",
   databaseURL: "https://clips-firebase-56329-default-rtdb.firebaseio.com",
-  projectId: "clips-firebase-56329",
-  storageBucket: "clips-firebase-56329.firebasestorage.app",
-  messagingSenderId: "496262241949",
-  appId: "1:496262241949:web:5e6761d129cbf361373e74"
+  projectId: "clips-firebase-56329"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -145,178 +127,107 @@ const db = firebase.database();
 
 const videos = [
   { file: "video1.mp4", title: "bomba de chão" },
-  { file: "video2.mp4", title: "burlas" },
-  { file: "video3.mp4", title: "rsrsrs" }
+  { file: "video2.mp4", title: "borlas" },
+  { file: "video3.mp4", title: "raio" }
 ]
 
-const list = document.getElementById("videoList")
+const home = document.getElementById("home")
+const playerScreen = document.getElementById("playerScreen")
 const mainVideo = document.getElementById("mainVideo")
 const title = document.getElementById("videoTitle")
 const stats = document.getElementById("videoStats")
-const likeBtn = document.getElementById("likeBtn")
-
-let currentVideo = null
-let counted = false
+const list = document.getElementById("videoList")
 
 function safeKey(name){
     return name.replace(/\./g, "_")
 }
 
-function updateLikeButton(){
+// HOME GRID
+videos.forEach(v => {
 
-    const key = safeKey(currentVideo)
+    const item = document.createElement("div")
+    item.className = "grid-item"
 
-    if(localStorage.getItem("liked_" + key)){
-        likeBtn.innerText = "👍"
-        likeBtn.classList.add("liked")
-    } else {
-        likeBtn.innerText = "👍"
-        likeBtn.classList.remove("liked")
-    }
+    const vid = document.createElement("video")
+    vid.src = "videos/" + v.file
 
-}
+    const t = document.createElement("div")
+    t.className = "grid-title"
+    t.innerText = v.title
 
-function loadVideo(video){
+    const views = document.createElement("div")
+    views.className = "grid-views"
+
+    db.ref("views/" + safeKey(v.file)).on("value", snap => {
+        views.innerText = (snap.val() || 0) + " views"
+    })
+
+    item.appendChild(vid)
+    item.appendChild(t)
+    item.appendChild(views)
+
+    item.onclick = () => openPlayer(v)
+
+    home.appendChild(item)
+
+})
+
+// abrir player
+function openPlayer(video){
+
+    home.style.display = "none"
+    playerScreen.style.display = "flex"
 
     mainVideo.src = "videos/" + video.file
     title.innerText = video.title
 
-    currentVideo = video.file
-    counted = false
+    list.innerHTML = ""
 
-    updateLikeButton()
+    videos.forEach(v => {
+
+        if(v.file === video.file) return
+
+        const card = document.createElement("div")
+        card.className = "video-card"
+
+        const thumb = document.createElement("div")
+        thumb.className = "thumb"
+
+        const preview = document.createElement("video")
+        preview.src = "videos/" + v.file
+
+        thumb.appendChild(preview)
+
+        const info = document.createElement("div")
+        info.className = "video-info"
+
+        const name = document.createElement("div")
+        name.innerText = v.title
+
+        info.appendChild(name)
+
+        card.appendChild(thumb)
+        card.appendChild(info)
+
+        card.onclick = () => openPlayer(v)
+
+        list.appendChild(card)
+
+    })
 
     const key = safeKey(video.file)
 
     db.ref("views/" + key).on("value", snap => {
-        const views = snap.val() || 0
-        db.ref("likes/" + key).on("value", snap2 => {
-            const likes = snap2.val() || 0
-            stats.innerText = views + " views • " + likes + " likes"
-        })
-    })
-}
-
-// views
-function addView(video){
-    const key = safeKey(video)
-
-    if(localStorage.getItem("viewed_" + key)) return;
-    localStorage.setItem("viewed_" + key, "1")
-
-    db.ref("views/" + key).transaction(v => (v || 0) + 1)
-}
-
-// likes
-function addLike(video){
-    const key = safeKey(video)
-
-    localStorage.setItem("liked_" + key, "1")
-
-    db.ref("likes/" + key).transaction(v => (v || 0) + 1)
-}
-
-function removeLike(video){
-    const key = safeKey(video)
-
-    localStorage.removeItem("liked_" + key)
-
-    db.ref("likes/" + key).transaction(v => {
-        return Math.max((v || 1) - 1, 0)
-    })
-}
-
-// play = view
-mainVideo.addEventListener("play", () => {
-    if(!counted && currentVideo){
-        addView(currentVideo)
-        counted = true
-    }
-})
-
-// TOGGLE COM ANIMAÇÃO
-likeBtn.onclick = () => {
-
-    if(!currentVideo) return;
-
-    const key = safeKey(currentVideo)
-
-    // DESCURTIR (com animação reversa)
-    if(localStorage.getItem("liked_" + key)){
-
-        likeBtn.classList.add("unliking")
-
-        setTimeout(() => {
-
-            removeLike(currentVideo)
-
-            likeBtn.classList.remove("liked")
-            likeBtn.classList.remove("unliking")
-            likeBtn.innerText = "👍"
-
-        }, 500)
-
-        return
-    }
-
-    // CURTIR (com animação)
-    likeBtn.classList.add("animating")
-
-    setTimeout(() => {
-
-        addLike(currentVideo)
-
-        likeBtn.classList.remove("animating")
-        likeBtn.classList.add("liked")
-        likeBtn.innerText = "👍"
-
-    }, 500)
-
-}
-
-// lista
-videos.forEach(v => {
-
-    const card = document.createElement("div")
-    card.className = "video-card"
-
-    const thumb = document.createElement("div")
-    thumb.className = "thumb"
-
-    const preview = document.createElement("video")
-    preview.src = "videos/" + v.file
-
-    thumb.appendChild(preview)
-
-    const info = document.createElement("div")
-    info.className = "video-info"
-
-    const name = document.createElement("div")
-    name.className = "video-name"
-    name.innerText = v.title
-
-    const viewsText = document.createElement("div")
-    viewsText.style.fontSize = "12px"
-
-    const key = safeKey(v.file)
-
-    db.ref("views/" + key).on("value", snap => {
-        viewsText.innerText = (snap.val() || 0) + " views"
+        stats.innerText = (snap.val() || 0) + " views"
     })
 
-    info.appendChild(name)
-    info.appendChild(viewsText)
+}
 
-    card.appendChild(thumb)
-    card.appendChild(info)
-
-    card.onclick = () => loadVideo(v)
-
-    list.appendChild(card)
-
-})
-
-loadVideo(videos[0])
+// voltar
+function goHome(){
+    playerScreen.style.display = "none"
+    home.style.display = "grid"
+}
 
 </script>
 
