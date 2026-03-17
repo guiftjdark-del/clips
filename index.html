@@ -2,32 +2,28 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<title>clips</title>
+<title>Meu Vídeo Site</title>
 
 <style>
 
 body{
     margin:0;
-    background:#0f0f0f;
-    color:white;
     font-family:Arial;
+    background: linear-gradient(180deg, #081a3a, #000000);
+    color:white;
 }
-
-/* layout */
 
 .container{
     display:flex;
 }
 
-/* PLAYER */
-
 .player{
-    width:75%;
+    width:70%;
     padding:20px;
 }
 
 .player video{
-    width:80%;
+    width:100%;
     border-radius:10px;
 }
 
@@ -36,15 +32,12 @@ body{
     margin-top:10px;
 }
 
-/* SIDEBAR */
-
 .sidebar{
-    width:75%;
-    padding:30px;
+    width:30%;
+    padding:20px;
 }
 
-/* VIDEO CARD */
-
+/* preview menor */
 .video-card{
     display:flex;
     margin-bottom:15px;
@@ -88,18 +81,32 @@ body{
 <div class="container">
 
 <div class="player">
-
 <video id="mainVideo" controls></video>
 <div class="video-title" id="videoTitle"></div>
-
 </div>
 
 <div class="sidebar" id="videoList"></div>
 
 </div>
 
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
 <script>
 
+// CONFIG FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyDsGHkgjKovIpVcCeZAQNet424lhvqQiUk",
+  authDomain: "clips-firebase-56329.firebaseapp.com",
+  projectId: "clips-firebase-56329",
+  databaseURL: "https://clips-firebase-56329-default-rtdb.firebaseio.com"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// LISTA DE VIDEOS
 const videos = [
 "video1.mp4",
 "video2.mp4",
@@ -111,24 +118,28 @@ const mainVideo = document.getElementById("mainVideo")
 const title = document.getElementById("videoTitle")
 
 function formatTime(sec){
-
     sec = Math.floor(sec)
-
     let m = Math.floor(sec / 60)
     let s = sec % 60
-
     if(s < 10) s = "0"+s
-
     return m+":"+s
 }
 
 function loadVideo(name){
-
     mainVideo.src = "videos/" + name
     title.innerText = name
-
 }
 
+// ADICIONAR VIEW
+function addView(video){
+    const ref = db.ref("views/" + video)
+
+    ref.transaction(current => {
+        return (current || 0) + 1
+    })
+}
+
+// CRIAR LISTA
 videos.forEach(v => {
 
     const card = document.createElement("div")
@@ -144,9 +155,7 @@ videos.forEach(v => {
     duration.className = "duration"
 
     preview.onloadedmetadata = () => {
-
         duration.innerText = formatTime(preview.duration)
-
     }
 
     thumb.appendChild(preview)
@@ -159,17 +168,30 @@ videos.forEach(v => {
     name.className = "video-name"
     name.innerText = v
 
+    // VIEWS
+    const viewsText = document.createElement("div")
+    viewsText.style.fontSize = "12px"
+
+    db.ref("views/" + v).on("value", snap => {
+        viewsText.innerText = (snap.val() || 0) + " views"
+    })
+
     info.appendChild(name)
+    info.appendChild(viewsText)
 
     card.appendChild(thumb)
     card.appendChild(info)
 
-    card.onclick = () => loadVideo(v)
+    card.onclick = () => {
+        loadVideo(v)
+        addView(v)
+    }
 
     list.appendChild(card)
 
 })
 
+// carregar primeiro vídeo
 loadVideo(videos[0])
 
 </script>
