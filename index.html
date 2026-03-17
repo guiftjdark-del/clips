@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <title>clips</title>
 
+<!-- FONTE -->
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+
 <style>
 
 body{
@@ -28,6 +31,8 @@ body{
 
 .grid-item video{
     width:100%;
+    aspect-ratio:16/9;
+    object-fit:cover;
     border-radius:10px;
 }
 
@@ -80,10 +85,22 @@ body{
     margin-left:10px;
 }
 
+/* BOTÃO VOLTAR */
+
 .back-btn{
-    margin:10px;
-    padding:8px 15px;
+    position:fixed;
+    top:10px;
+    left:10px;
+
+    font-family:'Lilita One', cursive;
+    font-size:28px;
+
+    background:black;
+    color:white;
+    border:none;
+
     cursor:pointer;
+    z-index:1000;
 }
 
 </style>
@@ -94,9 +111,10 @@ body{
 <!-- HOME -->
 <div id="home" class="grid"></div>
 
-<!-- PLAYER -->
-<button class="back-btn" onclick="goHome()">← Voltar</button>
+<!-- BOTÃO VOLTAR -->
+<button class="back-btn" onclick="goHome()">←</button>
 
+<!-- PLAYER -->
 <div class="container" id="playerScreen">
 
 <div class="player">
@@ -115,11 +133,14 @@ body{
 
 <script>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDsGHkgjKovIpVcCeZAQNet424lhvqQiUk",
-  authDomain: "clips-firebase-56329.firebaseapp.com",
-  databaseURL: "https://clips-firebase-56329-default-rtdb.firebaseio.com",
-  projectId: "clips-firebase-56329"
+const firebaseConfig = 
+{ apiKey: "AIzaSyDsGHkgjKovIpVcCeZAQNet424lhvqQiUk", 
+ authDomain: "clips-firebase-56329.firebaseapp.com", 
+ databaseURL: "https://clips-firebase-56329-default-rtdb.firebaseio.com", 
+ projectId: "clips-firebase-56329", 
+ storageBucket: "clips-firebase-56329.firebasestorage.app", 
+ messagingSenderId: "496262241949", 
+ appId: "1:496262241949:web:5e6761d129cbf361373e74"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -225,6 +246,10 @@ function openPlayer(video){
 
 // voltar
 function goHome(){
+
+    mainVideo.pause()
+    mainVideo.currentTime = 0
+
     playerScreen.style.display = "none"
     home.style.display = "grid"
 }
