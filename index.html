@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>clips</title>
 
-<!-- FONTE CERTA -->
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
 
 <style>
@@ -16,7 +15,7 @@ body{
     font-family:Arial;
 }
 
-/* HOME GRID */
+/* GRID */
 
 .grid{
     display:grid;
@@ -81,11 +80,7 @@ body{
     border-radius:8px;
 }
 
-.video-info{
-    margin-left:10px;
-}
-
-/* BOTÃO VOLTAR */
+/* BOTÃO */
 
 .back-btn{
     position:fixed;
@@ -102,9 +97,7 @@ body{
     border-radius:12px;
 
     padding:5px 12px;
-
     cursor:pointer;
-    z-index:1000;
 
     display:none;
 }
@@ -114,10 +107,12 @@ body{
 
 <body>
 
+<!-- MÚSICA -->
+<audio id="bgMusic" src="music.mp3" loop></audio>
+
 <!-- HOME -->
 <div id="home" class="grid"></div>
 
-<!-- BOTÃO VOLTAR -->
 <button class="back-btn" id="backBtn" onclick="goHome()">←</button>
 
 <!-- PLAYER -->
@@ -133,7 +128,6 @@ body{
 
 </div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -150,9 +144,9 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const videos = [
-  { file: "video1.mp4", title: "bomba lixo" },
-  { file: "video2.mp4", title: "burlinhas" },
-  { file: "video3.mp4", title: "raio" }
+  { file: "video1.mp4", title: "Clip insano 🔥", date: "2026-03-15" },
+  { file: "video2.mp4", title: "Jogada absurda 😳", date: "2026-03-10" },
+  { file: "video3.mp4", title: "Momento engraçado 😂", date: "2026-03-01" }
 ]
 
 const home = document.getElementById("home")
@@ -162,10 +156,37 @@ const title = document.getElementById("videoTitle")
 const stats = document.getElementById("videoStats")
 const list = document.getElementById("videoList")
 const backBtn = document.getElementById("backBtn")
+const music = document.getElementById("bgMusic")
 
 function safeKey(name){
     return name.replace(/\./g, "_")
 }
+
+// TEMPO DESDE UPLOAD
+function timeAgo(dateStr){
+
+    const now = new Date()
+    const date = new Date(dateStr)
+
+    const diff = Math.floor((now - date) / 1000)
+
+    const days = Math.floor(diff / 86400)
+    if(days > 0) return "há " + days + " dias"
+
+    const hours = Math.floor(diff / 3600)
+    if(hours > 0) return "há " + hours + " horas"
+
+    const mins = Math.floor(diff / 60)
+    if(mins > 0) return "há " + mins + " min"
+
+    return "agora"
+}
+
+// INICIAR MÚSICA
+document.body.addEventListener("click", () => {
+    music.volume = 0.2
+    music.play().catch(()=>{})
+}, { once:true })
 
 // HOME GRID
 videos.forEach(v => {
@@ -184,7 +205,7 @@ videos.forEach(v => {
     views.className = "grid-views"
 
     db.ref("views/" + safeKey(v.file)).on("value", snap => {
-        views.innerText = (snap.val() || 0) + " views"
+        views.innerText = (snap.val() || 0) + " views • " + timeAgo(v.date)
     })
 
     item.appendChild(vid)
@@ -203,6 +224,8 @@ function openPlayer(video){
     home.style.display = "none"
     playerScreen.style.display = "flex"
     backBtn.style.display = "block"
+
+    music.pause()
 
     mainVideo.src = "videos/" + video.file
     title.innerText = video.title
@@ -225,7 +248,6 @@ function openPlayer(video){
         thumb.appendChild(preview)
 
         const info = document.createElement("div")
-        info.className = "video-info"
 
         const name = document.createElement("div")
         name.innerText = v.title
@@ -244,7 +266,7 @@ function openPlayer(video){
     const key = safeKey(video.file)
 
     db.ref("views/" + key).on("value", snap => {
-        stats.innerText = (snap.val() || 0) + " views"
+        stats.innerText = (snap.val() || 0) + " views • " + timeAgo(video.date)
     })
 
 }
@@ -258,6 +280,8 @@ function goHome(){
     playerScreen.style.display = "none"
     home.style.display = "grid"
     backBtn.style.display = "none"
+
+    music.play().catch(()=>{})
 }
 
 </script>
