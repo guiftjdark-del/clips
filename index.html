@@ -26,8 +26,11 @@ body{
 
 .player video{
     width:100%;
+    max-height:70vh;
     border-radius:10px;
 }
+
+/* INFO */
 
 .video-title{
     font-size:22px;
@@ -35,19 +38,33 @@ body{
 }
 
 .video-stats{
-    margin-top:5px;
     font-size:14px;
     color:#aaa;
+    margin-top:5px;
 }
+
+/* BOTÃO LIKE */
 
 .like-btn{
     margin-top:10px;
-    background:#272727;
+    background:white;
+    color:black;
     border:none;
-    color:white;
     padding:8px 15px;
     border-radius:20px;
     cursor:pointer;
+
+    transition: background 0.5s, color 0.5s;
+}
+
+.like-btn.animating{
+    background:black;
+    color:black;
+}
+
+.like-btn.liked{
+    background:#3ea6ff;
+    color:black;
 }
 
 /* SIDEBAR */
@@ -90,6 +107,7 @@ body{
 <div class="player">
 
 <video id="mainVideo" controls></video>
+
 <div class="video-title" id="videoTitle"></div>
 <div class="video-stats" id="videoStats"></div>
 <button class="like-btn" id="likeBtn">👍 Curtir</button>
@@ -106,7 +124,7 @@ body{
 
 <script>
 
-// CONFIG (usa os teus dados reais)
+// CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyDsGHkgjKovIpVcCeZAQNet424lhvqQiUk",
   authDomain: "clips-firebase-56329.firebaseapp.com",
@@ -120,7 +138,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 🎬 VIDEOS COM TÍTULO BONITO
 const videos = [
   { file: "video1.mp4", title: "Clip insano 🔥" },
   { file: "video2.mp4", title: "Jogada absurda 😳" },
@@ -140,6 +157,20 @@ function safeKey(name){
     return name.replace(/\./g, "_")
 }
 
+function updateLikeButton(){
+
+    const key = safeKey(currentVideo)
+
+    if(localStorage.getItem("liked_" + key)){
+        likeBtn.innerText = "👍 Curtido"
+        likeBtn.classList.add("liked")
+    } else {
+        likeBtn.innerText = "👍 Curtir"
+        likeBtn.classList.remove("liked")
+    }
+
+}
+
 function loadVideo(video){
 
     mainVideo.src = "videos/" + video.file
@@ -147,6 +178,8 @@ function loadVideo(video){
 
     currentVideo = video.file
     counted = false
+
+    updateLikeButton()
 
     const key = safeKey(video.file)
 
@@ -159,35 +192,27 @@ function loadVideo(video){
     })
 }
 
-// 👀 VIEWS
+// views
 function addView(video){
-
     const key = safeKey(video)
 
     if(localStorage.getItem("viewed_" + key)) return;
-
     localStorage.setItem("viewed_" + key, "1")
 
-    const ref = db.ref("views/" + key)
-
-    ref.transaction(current => (current || 0) + 1)
+    db.ref("views/" + key).transaction(v => (v || 0) + 1)
 }
 
-// 👍 LIKE
+// likes
 function addLike(video){
-
     const key = safeKey(video)
 
     if(localStorage.getItem("liked_" + key)) return;
-
     localStorage.setItem("liked_" + key, "1")
 
-    const ref = db.ref("likes/" + key)
-
-    ref.transaction(current => (current || 0) + 1)
+    db.ref("likes/" + key).transaction(v => (v || 0) + 1)
 }
 
-// play = conta view
+// play = view
 mainVideo.addEventListener("play", () => {
     if(!counted && currentVideo){
         addView(currentVideo)
@@ -195,20 +220,36 @@ mainVideo.addEventListener("play", () => {
     }
 })
 
-// botão like
+// botão like com animação
 likeBtn.onclick = () => {
-    if(currentVideo){
+
+    if(!currentVideo) return;
+
+    const key = safeKey(currentVideo)
+
+    if(localStorage.getItem("liked_" + key)) return;
+
+    likeBtn.classList.add("animating")
+
+    setTimeout(() => {
+
         addLike(currentVideo)
-    }
+
+        likeBtn.classList.remove("animating")
+        likeBtn.classList.add("liked")
+        likeBtn.innerText = "👍 Curtido"
+
+    }, 500)
 }
 
-// LISTA
+// lista
 videos.forEach(v => {
 
     const card = document.createElement("div")
     card.className = "video-card"
 
     const thumb = document.createElement("div")
+    thumb.className = "thumb"
 
     const preview = document.createElement("video")
     preview.src = "videos/" + v.file
