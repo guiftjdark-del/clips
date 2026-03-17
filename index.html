@@ -13,8 +13,6 @@ body{
     font-family:Arial;
 }
 
-/* layout */
-
 .container{
     display:flex;
 }
@@ -22,12 +20,12 @@ body{
 /* PLAYER */
 
 .player{
-    width:75%;
+    width:70%;
     padding:20px;
 }
 
 .player video{
-    width:80%;
+    width:100%;
     border-radius:10px;
 }
 
@@ -36,11 +34,27 @@ body{
     margin-top:10px;
 }
 
+.video-stats{
+    margin-top:5px;
+    font-size:14px;
+    color:#aaa;
+}
+
+.like-btn{
+    margin-top:10px;
+    background:#272727;
+    border:none;
+    color:white;
+    padding:8px 15px;
+    border-radius:20px;
+    cursor:pointer;
+}
+
 /* SIDEBAR */
 
 .sidebar{
-    width:75%;
-    padding:30px;
+    width:30%;
+    padding:20px;
 }
 
 /* VIDEO CARD */
@@ -51,25 +65,11 @@ body{
     cursor:pointer;
 }
 
-.thumb{
-    position:relative;
-}
-
 .thumb video{
     width:120px;
     height:68px;
     object-fit:cover;
     border-radius:8px;
-}
-
-.duration{
-    position:absolute;
-    bottom:4px;
-    right:4px;
-    background:black;
-    font-size:12px;
-    padding:2px 4px;
-    border-radius:4px;
 }
 
 .video-info{
@@ -91,6 +91,8 @@ body{
 
 <video id="mainVideo" controls></video>
 <div class="video-title" id="videoTitle"></div>
+<div class="video-stats" id="videoStats"></div>
+<button class="like-btn" id="likeBtn">👍 Curtir</button>
 
 </div>
 
@@ -115,127 +117,119 @@ const firebaseConfig = {
   appId: "1:496262241949:web:5e6761d129cbf361373e74"
 };
 
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-let db = null;
-
-try {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-} catch(e){
-    console.log("Firebase erro:", e);
-}
-
-// VIDEOS
+// 🎬 VIDEOS COM TÍTULO BONITO
 const videos = [
-"video1.mp4",
-"video2.mp4",
-"video3.mp4"
+  { file: "video1.mp4", title: "Clip insano 🔥" },
+  { file: "video2.mp4", title: "Jogada absurda 😳" },
+  { file: "video3.mp4", title: "Momento engraçado 😂" }
 ]
 
 const list = document.getElementById("videoList")
 const mainVideo = document.getElementById("mainVideo")
 const title = document.getElementById("videoTitle")
+const stats = document.getElementById("videoStats")
+const likeBtn = document.getElementById("likeBtn")
 
 let currentVideo = null
 let counted = false
 
-// 🔥 limpa nome pro Firebase
 function safeKey(name){
     return name.replace(/\./g, "_")
 }
 
-function formatTime(sec){
+function loadVideo(video){
 
-    sec = Math.floor(sec)
+    mainVideo.src = "videos/" + video.file
+    title.innerText = video.title
 
-    let m = Math.floor(sec / 60)
-    let s = sec % 60
-
-    if(s < 10) s = "0"+s
-
-    return m+":"+s
-}
-
-function loadVideo(name){
-
-    mainVideo.src = "videos/" + name
-    title.innerText = name
-
-    currentVideo = name
+    currentVideo = video.file
     counted = false
+
+    const key = safeKey(video.file)
+
+    db.ref("views/" + key).on("value", snap => {
+        const views = snap.val() || 0
+        db.ref("likes/" + key).on("value", snap2 => {
+            const likes = snap2.val() || 0
+            stats.innerText = views + " views • " + likes + " likes"
+        })
+    })
 }
 
-// VIEW SYSTEM
+// 👀 VIEWS
 function addView(video){
-
-    if(!db) return;
 
     const key = safeKey(video)
 
-    // anti spam local
     if(localStorage.getItem("viewed_" + key)) return;
 
     localStorage.setItem("viewed_" + key, "1")
 
     const ref = db.ref("views/" + key)
 
-    ref.transaction(current => {
-        return (current || 0) + 1
-    })
+    ref.transaction(current => (current || 0) + 1)
 }
 
-// conta view quando dá play
-mainVideo.addEventListener("play", () => {
+// 👍 LIKE
+function addLike(video){
 
+    const key = safeKey(video)
+
+    if(localStorage.getItem("liked_" + key)) return;
+
+    localStorage.setItem("liked_" + key, "1")
+
+    const ref = db.ref("likes/" + key)
+
+    ref.transaction(current => (current || 0) + 1)
+}
+
+// play = conta view
+mainVideo.addEventListener("play", () => {
     if(!counted && currentVideo){
         addView(currentVideo)
         counted = true
     }
-
 })
 
-// criar lista
+// botão like
+likeBtn.onclick = () => {
+    if(currentVideo){
+        addLike(currentVideo)
+    }
+}
+
+// LISTA
 videos.forEach(v => {
 
     const card = document.createElement("div")
     card.className = "video-card"
 
     const thumb = document.createElement("div")
-    thumb.className = "thumb"
 
     const preview = document.createElement("video")
-    preview.src = "videos/" + v
-
-    const duration = document.createElement("div")
-    duration.className = "duration"
-
-    preview.onloadedmetadata = () => {
-        duration.innerText = formatTime(preview.duration)
-    }
+    preview.src = "videos/" + v.file
 
     thumb.appendChild(preview)
-    thumb.appendChild(duration)
 
     const info = document.createElement("div")
     info.className = "video-info"
 
     const name = document.createElement("div")
     name.className = "video-name"
-    name.innerText = v
+    name.innerText = v.title
 
-    // VIEWS TEXT
     const viewsText = document.createElement("div")
     viewsText.style.fontSize = "12px"
 
-    const key = safeKey(v)
+    const key = safeKey(v.file)
 
-    if(db){
-        db.ref("views/" + key).on("value", snap => {
-            viewsText.innerText = (snap.val() || 0) + " views"
-        })
-    } else {
-        viewsText.innerText = "0 views"
-    }
+    db.ref("views/" + key).on("value", snap => {
+        viewsText.innerText = (snap.val() || 0) + " views"
+    })
 
     info.appendChild(name)
     info.appendChild(viewsText)
@@ -243,15 +237,12 @@ videos.forEach(v => {
     card.appendChild(thumb)
     card.appendChild(info)
 
-    card.onclick = () => {
-        loadVideo(v)
-    }
+    card.onclick = () => loadVideo(v)
 
     list.appendChild(card)
 
 })
 
-// carregar primeiro vídeo
 loadVideo(videos[0])
 
 </script>
