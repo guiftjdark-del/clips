@@ -121,6 +121,7 @@ try {
     console.log("Firebase erro:", e);
 }
 
+// VIDEOS
 const videos = [
 "video1.mp4",
 "video2.mp4",
@@ -130,6 +131,9 @@ const videos = [
 const list = document.getElementById("videoList")
 const mainVideo = document.getElementById("mainVideo")
 const title = document.getElementById("videoTitle")
+
+let currentVideo = null
+let counted = false
 
 function formatTime(sec){
 
@@ -148,11 +152,19 @@ function loadVideo(name){
     mainVideo.src = "videos/" + name
     title.innerText = name
 
+    currentVideo = name
+    counted = false
 }
 
-// VIEW
+// VIEW SYSTEM
 function addView(video){
+
     if(!db) return;
+
+    // anti spam local
+    if(localStorage.getItem("viewed_" + video)) return;
+
+    localStorage.setItem("viewed_" + video, "1")
 
     const ref = db.ref("views/" + video)
 
@@ -161,6 +173,17 @@ function addView(video){
     })
 }
 
+// conta view quando dá play
+mainVideo.addEventListener("play", () => {
+
+    if(!counted && currentVideo){
+        addView(currentVideo)
+        counted = true
+    }
+
+})
+
+// criar lista
 videos.forEach(v => {
 
     const card = document.createElement("div")
@@ -189,17 +212,17 @@ videos.forEach(v => {
     name.className = "video-name"
     name.innerText = v
 
-    // VIEWS
+    // VIEWS TEXT
     const viewsText = document.createElement("div")
     viewsText.style.fontSize = "12px"
 
     if(db){
-    db.ref("views/" + v).on("value", snap => {
-        viewsText.innerText = (snap.val() || 0) + " views"
-    })
-} else {
-    viewsText.innerText = "0 views"
-}
+        db.ref("views/" + v).on("value", snap => {
+            viewsText.innerText = (snap.val() || 0) + " views"
+        })
+    } else {
+        viewsText.innerText = "0 views"
+    }
 
     info.appendChild(name)
     info.appendChild(viewsText)
@@ -209,13 +232,13 @@ videos.forEach(v => {
 
     card.onclick = () => {
         loadVideo(v)
-        addView(v)
     }
 
     list.appendChild(card)
 
 })
 
+// carregar primeiro vídeo
 loadVideo(videos[0])
 
 </script>
