@@ -53,18 +53,25 @@ body{
     padding:8px 15px;
     border-radius:20px;
     cursor:pointer;
-
     transition: background 0.5s, color 0.5s;
 }
 
+/* animação curtir */
 .like-btn.animating{
     background:black;
     color:black;
 }
 
+/* estado curtido */
 .like-btn.liked{
     background:#3ea6ff;
     color:black;
+}
+
+/* animação descurtir */
+.like-btn.unliking{
+    background:white;
+    color:white;
 }
 
 /* SIDEBAR */
@@ -73,8 +80,6 @@ body{
     width:30%;
     padding:20px;
 }
-
-/* VIDEO CARD */
 
 .video-card{
     display:flex;
@@ -110,7 +115,7 @@ body{
 
 <div class="video-title" id="videoTitle"></div>
 <div class="video-stats" id="videoStats"></div>
-<button class="like-btn" id="likeBtn">👍 Curtir</button>
+<button class="like-btn" id="likeBtn">👍</button>
 
 </div>
 
@@ -139,9 +144,9 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const videos = [
-  { file: "video1.mp4", title: "Clip insano 🔥" },
-  { file: "video2.mp4", title: "Jogada absurda 😳" },
-  { file: "video3.mp4", title: "Momento engraçado 😂" }
+  { file: "video1.mp4", title: "bomba de chão" },
+  { file: "video2.mp4", title: "burlas" },
+  { file: "video3.mp4", title: "hihihi" }
 ]
 
 const list = document.getElementById("videoList")
@@ -162,10 +167,10 @@ function updateLikeButton(){
     const key = safeKey(currentVideo)
 
     if(localStorage.getItem("liked_" + key)){
-        likeBtn.innerText = "👍 Curtido"
+        likeBtn.innerText = "👍"
         likeBtn.classList.add("liked")
     } else {
-        likeBtn.innerText = "👍 Curtir"
+        likeBtn.innerText = "👍"
         likeBtn.classList.remove("liked")
     }
 
@@ -206,10 +211,19 @@ function addView(video){
 function addLike(video){
     const key = safeKey(video)
 
-    if(localStorage.getItem("liked_" + key)) return;
     localStorage.setItem("liked_" + key, "1")
 
     db.ref("likes/" + key).transaction(v => (v || 0) + 1)
+}
+
+function removeLike(video){
+    const key = safeKey(video)
+
+    localStorage.removeItem("liked_" + key)
+
+    db.ref("likes/" + key).transaction(v => {
+        return Math.max((v || 1) - 1, 0)
+    })
 }
 
 // play = view
@@ -220,15 +234,32 @@ mainVideo.addEventListener("play", () => {
     }
 })
 
-// botão like com animação
+// TOGGLE COM ANIMAÇÃO
 likeBtn.onclick = () => {
 
     if(!currentVideo) return;
 
     const key = safeKey(currentVideo)
 
-    if(localStorage.getItem("liked_" + key)) return;
+    // DESCURTIR (com animação reversa)
+    if(localStorage.getItem("liked_" + key)){
 
+        likeBtn.classList.add("unliking")
+
+        setTimeout(() => {
+
+            removeLike(currentVideo)
+
+            likeBtn.classList.remove("liked")
+            likeBtn.classList.remove("unliking")
+            likeBtn.innerText = "👍"
+
+        }, 500)
+
+        return
+    }
+
+    // CURTIR (com animação)
     likeBtn.classList.add("animating")
 
     setTimeout(() => {
@@ -237,9 +268,10 @@ likeBtn.onclick = () => {
 
         likeBtn.classList.remove("animating")
         likeBtn.classList.add("liked")
-        likeBtn.innerText = "👍 Curtido"
+        likeBtn.innerText = "👍"
 
     }, 500)
+
 }
 
 // lista
