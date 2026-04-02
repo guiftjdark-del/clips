@@ -143,8 +143,11 @@ const db = firebase.database();
 // LISTA DE VÍDEOS
 const videos = [
   { thumb: "thumbnail1.png", video: "video1.mp4", title: "zRicky" },
-  { thumb: "thumbnail2.png", video: "video2.mp4", title: "burlas" },
-  { thumb: "thumbnail3.png", video: "video3.mp4", title: "rsrsrs" }
+  { thumb: "thumbnail2.png", video: "video2.mp4", title: "Burlas" },
+  { thumb: "thumbnail3.png", video: "video3.mp4", title: "Teste" },
+  { thumb: "thumbnail4.png", video: "video4.mp4", title: "Teste1" },
+  { thumb: "thumbnail5.png", video: "video5.mp4", title: "Teste2" },
+  { thumb: "thumbnail6.png", video: "video6.mp4", title: "Teste3" }
 ]
 
 const list = document.getElementById("videoList")
@@ -261,11 +264,7 @@ videos.forEach(v => {
     thumb.className = "thumb"
 
     const preview = document.createElement("img")
-
-// troca .mp4 por .png automaticamente
-const thumbName = v.file.replace(".mp4", ".png")
-
-preview.src = "thumbnails/" + thumbName
+    preview.src = "thumbnails/" + v.thumb
 
     thumb.appendChild(preview)
 
