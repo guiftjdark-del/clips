@@ -56,19 +56,16 @@ body{
     transition: background 0.5s, color 0.5s;
 }
 
-/* animação curtir */
 .like-btn.animating{
     background:black;
     color:black;
 }
 
-/* estado curtido */
 .like-btn.liked{
     background:#3ea6ff;
     color:black;
 }
 
-/* animação descurtir */
 .like-btn.unliking{
     background:white;
     color:white;
@@ -87,7 +84,7 @@ body{
     cursor:pointer;
 }
 
-.thumb video{
+.thumb img{
     width:120px;
     height:68px;
     object-fit:cover;
@@ -143,15 +140,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// LISTA DE VÍDEOS
 const videos = [
-  { file: "video1.mp4", title: "zRicky" },
-  { file: "video2.mp4", title: "burlas" },
-  { file: "video3.mp4", title: "rsrsrs" },
-  { file: "video4.mp4", title: "rz7.1" },
-  { file: "video5.mp4", title: "rz7.2" },
-  { file: "video6.mp4", title: "rhuan" },
-  { file: "video7.mp4", title: "sabor lemanha" },
-  { file: "video8.mp4", title: "p-x igoro" }
+  { thumb: "thumbnail1.png", video: "video1.mp4", title: "zRicky" },
+  { thumb: "thumbnail2.png", video: "video2.mp4", title: "burlas" },
+  { thumb: "thumbnail3.png", video: "video3.mp4", title: "rsrsrs" }
 ]
 
 const list = document.getElementById("videoList")
@@ -168,30 +161,26 @@ function safeKey(name){
 }
 
 function updateLikeButton(){
-
     const key = safeKey(currentVideo)
 
     if(localStorage.getItem("liked_" + key)){
-        likeBtn.innerText = "👍"
         likeBtn.classList.add("liked")
     } else {
-        likeBtn.innerText = "👍"
         likeBtn.classList.remove("liked")
     }
-
 }
 
 function loadVideo(video){
 
-    mainVideo.src = "videos/" + video.file
+    mainVideo.src = "videos/" + video.video
     title.innerText = video.title
 
-    currentVideo = video.file
+    currentVideo = video.video
     counted = false
 
     updateLikeButton()
 
-    const key = safeKey(video.file)
+    const key = safeKey(video.video)
 
     db.ref("views/" + key).on("value", snap => {
         const views = snap.val() || 0
@@ -217,7 +206,6 @@ function addLike(video){
     const key = safeKey(video)
 
     localStorage.setItem("liked_" + key, "1")
-
     db.ref("likes/" + key).transaction(v => (v || 0) + 1)
 }
 
@@ -225,10 +213,7 @@ function removeLike(video){
     const key = safeKey(video)
 
     localStorage.removeItem("liked_" + key)
-
-    db.ref("likes/" + key).transaction(v => {
-        return Math.max((v || 1) - 1, 0)
-    })
+    db.ref("likes/" + key).transaction(v => Math.max((v || 1) - 1, 0))
 }
 
 // play = view
@@ -239,47 +224,34 @@ mainVideo.addEventListener("play", () => {
     }
 })
 
-// TOGGLE COM ANIMAÇÃO
+// botão like
 likeBtn.onclick = () => {
 
     if(!currentVideo) return;
 
     const key = safeKey(currentVideo)
 
-    // DESCURTIR (com animação reversa)
     if(localStorage.getItem("liked_" + key)){
-
         likeBtn.classList.add("unliking")
 
         setTimeout(() => {
-
             removeLike(currentVideo)
-
-            likeBtn.classList.remove("liked")
-            likeBtn.classList.remove("unliking")
-            likeBtn.innerText = "👍"
-
+            likeBtn.classList.remove("liked", "unliking")
         }, 500)
 
         return
     }
 
-    // CURTIR (com animação)
     likeBtn.classList.add("animating")
 
     setTimeout(() => {
-
         addLike(currentVideo)
-
         likeBtn.classList.remove("animating")
         likeBtn.classList.add("liked")
-        likeBtn.innerText = "👍"
-
     }, 500)
-
 }
 
-// lista
+// lista lateral
 videos.forEach(v => {
 
     const card = document.createElement("div")
@@ -288,8 +260,8 @@ videos.forEach(v => {
     const thumb = document.createElement("div")
     thumb.className = "thumb"
 
-    const preview = document.createElement("video")
-    preview.src = "videos/" + v.file
+    const preview = document.createElement("img")
+    preview.src = "thumbnails/" + v.thumb
 
     thumb.appendChild(preview)
 
@@ -303,7 +275,7 @@ videos.forEach(v => {
     const viewsText = document.createElement("div")
     viewsText.style.fontSize = "12px"
 
-    const key = safeKey(v.file)
+    const key = safeKey(v.video)
 
     db.ref("views/" + key).on("value", snap => {
         viewsText.innerText = (snap.val() || 0) + " views"
@@ -321,6 +293,7 @@ videos.forEach(v => {
 
 })
 
+// inicia com o primeiro vídeo
 loadVideo(videos[0])
 
 </script>
