@@ -261,7 +261,11 @@ videos.forEach(v => {
     thumb.className = "thumb"
 
     const preview = document.createElement("img")
-    preview.src = "thumbnails/" + v.thumb
+
+// troca .mp4 por .png automaticamente
+const thumbName = v.file.replace(".mp4", ".png")
+
+preview.src = "thumbnails/" + thumbName
 
     thumb.appendChild(preview)
 
